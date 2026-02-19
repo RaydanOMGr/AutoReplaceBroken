@@ -1,0 +1,110 @@
+name: Build JNI Plugin
+
+on:
+  push:
+  pull_request:
+
+jobs:
+
+  build-linux-windows:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [i686-unknown-linux-gnu, x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu,
+                 i686-pc-windows-gnu, x86_64-pc-windows-gnu, aarch64-pc-windows-gnu]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install cross compilers
+        run: |
+          sudo apt update
+          sudo apt install -y gcc-multilib gcc-aarch64-linux-gnu mingw-w64
+
+      - name: Build Native
+        run: cargo build --release --target ${{ matrix.target }}
+        working-directory: rust
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.target }}
+          path: rust/target/${{ matrix.target }}/release/*
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        target: [x86_64-apple-darwin, aarch64-apple-darwin]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Build Native
+        run: cargo build --release --target ${{ matrix.target }}
+        working-directory: rust
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.target }}
+          path: rust/target/${{ matrix.target }}/release/*
+
+  assemble-jar:
+    needs: [build-linux-windows, build-macos]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: mkdir -p build/resources/main
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-i686-unknown-linux-gnu
+          path: build/resources/main/linux/i686
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-x86_64-unknown-linux-gnu
+          path: build/resources/main/linux/x86_64
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-aarch64-unknown-linux-gnu
+          path: build/resources/main/linux/aarch64
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-i686-pc-windows-gnu
+          path: build/resources/main/windows/i686
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-x86_64-pc-windows-gnu
+          path: build/resources/main/windows/x86_64
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-aarch64-pc-windows-gnu
+          path: build/resources/main/windows/aarch64
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-x86_64-apple-darwin
+          path: build/resources/main/macos/x86_64
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-aarch64-apple-darwin
+          path: build/resources/main/macos/aarch64
+
+      - name: Build Jar
+        run: ./gradlew build

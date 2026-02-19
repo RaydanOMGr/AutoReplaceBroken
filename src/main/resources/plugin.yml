@@ -1,0 +1,6 @@
+name: autoreplacebroken
+version: '1.0-SNAPSHOT'
+main: me.andreasmelone.autoreplacebroken.AutoReplaceBroken
+api-version: '1.21'
+load: STARTUP
+authors: [ AndreasMelone ]
