@@ -55,7 +55,7 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 tasks.processResources {
-    dependsOn("copyNatives")
+    if(System.getenv("DONT_COPY_NATIVES") != "true") dependsOn("copyNatives")
 
     val props = mapOf("version" to project.version)
 
