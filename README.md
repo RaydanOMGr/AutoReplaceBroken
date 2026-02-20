@@ -20,6 +20,7 @@ Supported architectures:
 | x86 (i686)   | ✅       | ❌     | ✅     |
 | x86_64       | ✅       | ✅     | ✅     |
 | aarch64      | ❓       | ✅     | ✅     |
+
 ✅ = Fully supported<br>
 ❌ = Not supported<br>
 ❓ = May be possible, but not officially supported<br>
